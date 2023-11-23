@@ -24,5 +24,11 @@ soup = BeautifulSoup(page_content, "html.parser")
 discography_elements = soup.find_all("li", class_="component_discography_item")
 
 for discography_element in discography_elements:
-    discography_title = discography_element.find(class_="ui_name_locale_original")
-    print(discography_title.text, end="\n"*5)
+    element_title = discography_element.find(class_="ui_name_locale_original").get_text(strip=True)
+    element_type = (discography_element.find(class_="component_discography_item_details").select('div > span')[2]
+                        .get_text(strip=True))
+    element_link = discography_element.find(class_="component_discography_item_link release")["href"]
+
+    print(element_type, end="\n")
+    print(element_title, end="\n")
+    print("https://rateyourmusic.com" + element_link, end="\n"*2)
