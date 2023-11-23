@@ -21,4 +21,8 @@ else:
 
 soup = BeautifulSoup(page_content, "html.parser")
 
-print(soup.prettify())
+discography_elements = soup.find_all("li", class_="component_discography_item")
+
+for discography_element in discography_elements:
+    discography_title = discography_element.find(class_="ui_name_locale_original")
+    print(discography_title.text, end="\n"*5)
