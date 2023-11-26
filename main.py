@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
 
 from_file = True
 
@@ -23,12 +24,25 @@ soup = BeautifulSoup(page_content, "html.parser")
 
 discography_elements = soup.find_all("li", class_="component_discography_item")
 
-for discography_element in discography_elements:
-    element_title = discography_element.find(class_="ui_name_locale_original").get_text(strip=True)
-    element_type = (discography_element.find(class_="component_discography_item_details").select('div > span')[2]
-                        .get_text(strip=True))
-    element_link = discography_element.find(class_="component_discography_item_link release")["href"]
+# df = pd.DataFrame({}, columns=["Genre", "Title", "Year", "Type", "Number of Tracks", "Link"])
 
-    print(element_type, end="\n")
-    print(element_title, end="\n")
-    print("https://rateyourmusic.com" + element_link, end="\n"*2)
+rows_list = []
+
+for discography_element in discography_elements:
+    dict1 = {}
+
+    element_title = discography_element.find(class_="ui_name_locale_original").get_text(strip=True)
+    dict1.update({"title": element_title})
+
+    element_type = (discography_element.find(class_="component_discography_item_details").select('div > span')[2]
+                    .get_text(strip=True))
+    dict1.update({"type": element_type})
+
+    element_link = discography_element.find(class_="component_discography_item_link release")["href"]
+    dict1.update({"link": "https://rateyourmusic.com" + element_link})
+
+    rows_list.append(dict1)
+
+df = pd.DataFrame(rows_list)
+
+df.to_csv('file.csv')
