@@ -1,48 +1,68 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import time
+import random
 
-from_file = True
 
-URL = "https://rateyourmusic.com/genre/rock/"
+def scrape_page(content_f):
+    soup = BeautifulSoup(content_f, "html.parser")
 
-headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 '
-                  'Safari/537.36'
-}
-if not from_file:
-    page = requests.get(URL, headers=headers)
-    page_content = page.content
-    with open("response.txt", "wb") as f:
-        f.write(page.content)
-    print("From HTTP request")
-else:
-    page_content = open("response.txt", "rb")
-    print("From saved file")
+    discography_elements = soup.find_all("li", class_="component_discography_item")
 
-soup = BeautifulSoup(page_content, "html.parser")
+    rows = []
 
-discography_elements = soup.find_all("li", class_="component_discography_item")
+    for discography_element in discography_elements:
+        dict1 = {}
 
-# df = pd.DataFrame({}, columns=["Genre", "Title", "Year", "Type", "Number of Tracks", "Link"])
+        element_title = discography_element.find(class_="ui_name_locale_original").get_text(strip=True)
+        dict1.update({"title": element_title})
+
+        element_type = (discography_element.find(class_="component_discography_item_details").select('div > span')[2]
+                        .get_text(strip=True))
+        dict1.update({"type": element_type})
+
+        element_link = discography_element.find(class_="component_discography_item_link release")["href"]
+        dict1.update({"link": "https://rateyourmusic.com" + element_link})
+
+        rows.append(dict1)
+    return rows
+
+
+def get_page_content(genre_f, page_number_f, from_file_f):
+    url = "https://rateyourmusic.com/genre/" + genre_f + "/" + str(page_number_f)
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/119.0.0.0'
+                      'Safari/537.36'
+    }
+    file_path = genre + "/" + genre_f + "_" + str(page_number_f) + ".txt"
+    if not from_file_f:
+        page = requests.get(url, headers=headers)
+        page_content_f = page.content
+        with open(file_path, "wb") as f:
+            f.write(page.content)
+        print("From HTTP request")
+    else:
+        page_content_f = open(file_path, "rb")
+        print("From saved file")
+    return page_content_f
+
+
+from_file = False
+genre = "rock"
 
 rows_list = []
 
-for discography_element in discography_elements:
-    dict1 = {}
+for i in range(1, 251):
+    page_content = get_page_content(genre, i, from_file)
+    content = scrape_page(page_content)
+    print(content, end='\n')
+    rows_list.extend(content)
+    time.sleep(1 + 2*random.random())
 
-    element_title = discography_element.find(class_="ui_name_locale_original").get_text(strip=True)
-    dict1.update({"title": element_title})
 
-    element_type = (discography_element.find(class_="component_discography_item_details").select('div > span')[2]
-                    .get_text(strip=True))
-    dict1.update({"type": element_type})
-
-    element_link = discography_element.find(class_="component_discography_item_link release")["href"]
-    dict1.update({"link": "https://rateyourmusic.com" + element_link})
-
-    rows_list.append(dict1)
-
+print(rows_list)
 df = pd.DataFrame(rows_list)
 
 df.to_csv('file.csv')
