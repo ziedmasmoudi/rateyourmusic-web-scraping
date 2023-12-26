@@ -1,8 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-import time
-import random
 
 
 def scrape_page(content_f):
@@ -49,20 +47,27 @@ def get_page_content(genre_f, page_number_f, from_file_f):
     return page_content_f
 
 
+def get_page_content_scraperapi(genre_f, page_number_f):
+    payload = {'api_key': '14909c782c424358e32379909b1424f7', 'url': 'https://rateyourmusic.com/genre/' + genre_f + "/" + str(page_number_f)}
+    r = requests.get('https://api.scraperapi.com/', params=payload)
+    file_path = genre_f + "/" + genre_f + "_" + str(page_number_f) + ".txt"
+    with open(file_path, "wb") as f:
+        f.write(r.content)
+    return r.content
+
+
 from_file = False
-genre = "rock"
+genre = "jazz"
 
 rows_list = []
 
 for i in range(1, 251):
-    page_content = get_page_content(genre, i, from_file)
+    page_content = get_page_content_scraperapi(genre, i)
     content = scrape_page(page_content)
     print(content, end='\n')
     rows_list.extend(content)
-    time.sleep(1 + 2*random.random())
-
 
 print(rows_list)
 df = pd.DataFrame(rows_list)
 
-df.to_csv('file.csv')
+df.to_csv(genre + '/' + genre + '.csv')
